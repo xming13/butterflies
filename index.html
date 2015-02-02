@@ -2,7 +2,9 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Butterfly love</title>
+    <title>Butterflies love</title>
+    <meta property="og:title" content="Butterflies love" />
+    <meta property="og:image" content="http://xming13.github.io/butterflies/fb-share.png" />
 </head>
 <body onload="init();" style="margin: 0 auto; padding: 0; text-align: center; background-color: #FFD3DA;">
 <canvas id="canvas" width="320" height="480" style="background-color: #FFD3DA;"></canvas>
@@ -34,6 +36,7 @@ function init() {
     for (var x = -10; x <= 10; x += 1) {
 
         var x1 = x / 10;
+
         // http://www.monkeywiththehat.com/2011/06/love-formula-heart-shaped-curvy-graph.html
         // using this heart shaped equation:
         //
