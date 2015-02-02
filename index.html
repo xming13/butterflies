@@ -9,277 +9,292 @@
 <script src="js/createjs-2014.12.12.min.js"></script>
 <script src="js/tweenjs-0.6.0.min.js"></script>
 <script>
-    var stage;
-    var width = document.getElementById('canvas').width;
-    var height = document.getElementById('canvas').height;
-    var butterflies = [];
-    var butterflyHeight = 13;
-    var butterflyWidth  = 30;
-    var scale = 1;
-    var up = true;
-    var scaleFactor = 100;
-    var offsetX = width / 2;
-    var offsetY = height / 2;
-    var activeCount = 0;
-    var isHeartFormation = false;
-    var isSinglePointFormation = false;
-    var isMultiplePointFormation = false;
-    var isAnimating = false;
-    var drawCount = 0;
+var stage;
+var width = document.getElementById('canvas').width;
+var height = document.getElementById('canvas').height;
+var butterflies = [];
+var butterflyHeight = 30;
+var butterflyWidth = 30;
+var scale = 1;
+var up = true;
+var scaleFactor = 100;
+var offsetX = width / 2;
+var offsetY = height / 2;
+var activeCount = 0;
+var isHeartFormation = false;
+var isSinglePointFormation = false;
+var isMultiplePointFormation = true;
+var isAnimating = false;
+var drawCount = 0;
 
-    function init() {
-        stage = new createjs.Stage("canvas");
+function init() {
+    stage = new createjs.Stage("canvas");
 
-        // avoid floating point
-        for (var x = -10; x <= 10; x += 1) {
+    // avoid floating point
+    for (var x = -10; x <= 10; x += 1) {
 
-            var x1 = x / 10;
-            // http://www.monkeywiththehat.com/2011/06/love-formula-heart-shaped-curvy-graph.html
-            // using this heart shaped equation:
-            //
-            //  x^2 + ( 5y/4 - sqrt(abs(x)) )^2 = 1
-            //
-            var y1 = (Math.sqrt(1 - x1 * x1) + Math.sqrt(Math.abs(x1))) * 4 / 5;
-            var y2 = (-1 * Math.sqrt(1 - x1 * x1) + Math.sqrt(Math.abs(x1))) * 4 / 5;
+        var x1 = x / 10;
+        // http://www.monkeywiththehat.com/2011/06/love-formula-heart-shaped-curvy-graph.html
+        // using this heart shaped equation:
+        //
+        //  x^2 + ( 5y/4 - sqrt(abs(x)) )^2 = 1
+        //
+        var y1 = (Math.sqrt(1 - x1 * x1) + Math.sqrt(Math.abs(x1))) * 4 / 5;
+        var y2 = (-1 * Math.sqrt(1 - x1 * x1) + Math.sqrt(Math.abs(x1))) * 4 / 5;
 
-            if (y1 !== y2) {
-                var interval = (y1 - y2) / 5;
+        if (y1 !== y2) {
+            var interval = (y1 - y2) / 5;
 
-                var indexY = 0;
-                var  y = -y1;
-                for (var i = 0; i <= 5; i++) {
+            var indexY = 0;
+            var y = -y1;
+            for (var i = 0; i <= 5; i++) {
+                var butterfly = drawButterfly(x1, y);
+                butterfly.indexX = x1;
+                butterfly.indexY = indexY;
+
+                // duplicate butterfly for the center ones
+                // so that there will be one each on left and right
+                // when animate to rectangle formation
+                if (x === 0) {
                     var butterfly = drawButterfly(x1, y);
                     butterfly.indexX = x1;
                     butterfly.indexY = indexY;
-
-                    // duplicate butterfly for the center ones
-                    if (x === 0 ) {
-                        var butterfly = drawButterfly(x1, y);
-                        butterfly.indexX = x1;
-                        butterfly.indexY = indexY;
-                        butterfly.duplicate = true;
-                    }
-
-                    indexY++;
-                    y += interval;
+                    butterfly.duplicate = true;
                 }
+
+                indexY++;
+                y += interval;
             }
-            else {
+        }
+        else {
+            var butterfly = drawButterfly(x1, -y2);
+            butterfly.indexX = x1;
+            butterfly.indexY = 5;
+
+            // duplicate butterfly for the center ones
+            // so that there will be one each on left and right
+            // when animate to rectangle formation
+            if (x === 0) {
                 var butterfly = drawButterfly(x1, -y2);
                 butterfly.indexX = x1;
                 butterfly.indexY = 5;
-
-                // duplicate butterfly for the center ones
-                if (x === 0) {
-                    var butterfly = drawButterfly(x1, -y2);
-                    butterfly.indexX = x1;
-                    butterfly.indexY = 5;
-                    butterfly.duplicate = true;
-                }
+                butterfly.duplicate = true;
             }
         }
-
-        createjs.Ticker.addEventListener("tick", handleTick);
-        console.log('drawCount: ', drawCount);
     }
 
-    function handleTick() {
-        if (!isAnimating) {
-            isAnimating = true;
-            activeCount = butterflies.length;
+    createjs.Ticker.addEventListener("tick", handleTick);
+    console.log('drawCount: ', drawCount);
+}
 
-            if (isHeartFormation) {
-                butterflies.forEach(function(butterfly) {
-                    createjs.Tween.get(butterfly, {override: true})
-                            .to({x: butterfly.heartX, y: butterfly.heartY}, 1500, createjs.Ease.circOut())
-                            .call(tweenCompleted);
-                });
-            }
-            else if (isSinglePointFormation) {
-                butterflies.forEach(function(butterfly) {
-                    createjs.Tween.get(butterfly, {override: true})
-                            .to({x: butterflyWidth / 2, y: butterflyHeight / 2}, 1500, createjs.Ease.circIn())
-                            .call(tweenCompleted);
-                });
-            }
-            else if (isMultiplePointFormation) {
-                butterflies.forEach(function(butterfly) {
-                    var targetX = butterfly.indexX < 0 || butterfly.duplicate
+function handleTick() {
+    if (!isAnimating) {
+        isAnimating = true;
+        activeCount = butterflies.length;
+
+        if (isHeartFormation) {
+            butterflies.forEach(function (butterfly) {
+                createjs.Tween.get(butterfly, {override: true})
+                        .to({x: butterfly.heartX, y: butterfly.heartY}, 1500, createjs.Ease.circOut())
+                        .call(tweenCompleted);
+            });
+        }
+        else if (isSinglePointFormation) {
+            butterflies.forEach(function (butterfly) {
+                createjs.Tween.get(butterfly, {override: true})
+                        .to({x: butterflyWidth / 2, y: butterflyHeight / 2}, 1500, createjs.Ease.circIn())
+                        .call(tweenCompleted);
+            });
+        }
+        else if (isMultiplePointFormation) {
+            butterflies.forEach(function (butterfly) {
+                var targetX = butterfly.indexX < 0 || butterfly.duplicate
+                        ? butterflyWidth / 2
+                        : width - butterflyWidth / 2;
+                var targetY = butterfly.indexY <= 2
+                        ? butterflyHeight / 2
+                        : height - butterflyHeight / 2;
+                createjs.Tween.get(butterfly, {override: true})
+                        .to({x: targetX, y: targetY}, 1500, createjs.Ease.circIn())
+                        .call(tweenCompleted);
+            });
+        }
+        else {
+            var totalFirstRow = 0;
+            var totalLastRow = 0;
+            butterflies.forEach(function (butterfly) {
+                if (butterfly.indexY === 0) {
+                    totalFirstRow++;
+                }
+                else if (butterfly.indexY === 5) {
+                    totalLastRow++;
+                }
+            });
+            var countFirstRow = 0;
+            var countLastRow = 0;
+
+            butterflies.forEach(function (butterfly) {
+                var targetX, targetY;
+
+                // to account for the left and right offset (half of butterflyWidth each)
+                var centerWidth = width - butterflyWidth;
+                // to account for the top and bottom offset (half of butterflyHeight each)
+                var centerHeight = height - butterflyHeight;
+
+                if (butterfly.indexY === 0) {
+                    targetX = butterflyWidth / 2 // start offset
+                                + (countFirstRow % 2 === 0 ? countFirstRow : countFirstRow - 1) / (totalFirstRow - 1) * centerWidth;
+                    targetY = butterflyHeight / 2;
+                    countFirstRow++;
+                }
+                else if (butterfly.indexY === 5) {
+                    targetX = butterflyWidth / 2 // start offset
+                                + (countLastRow % 2 === 0 ? countLastRow : countLastRow - 1) / (totalLastRow - 1) * centerWidth;
+                    targetY = height - butterflyHeight / 2;
+                    countLastRow++;
+                }
+                else {
+                    // possible range of indexX is [-1, 1]
+                    // we separate into two cases
+                    // those that are less than 0 or is duplicate will animate to the left
+                    // and those that are more than or equal to 0 will animate to the right
+                    targetX = butterfly.indexX < 0 || butterfly.duplicate
                             ? butterflyWidth / 2
-                            : width - butterflyWidth / 2;
-                    var targetY =  butterfly.indexY <= 2
-                            ? butterflyHeight / 2
-                            : height - butterflyHeight / 2;
-                    createjs.Tween.get(butterfly, {override: true})
-                            .to({x: targetX, y: targetY}, 1500, createjs.Ease.circIn())
-                            .call(tweenCompleted);
-                });
-            }
-            else {
-                var totalFirstRow = 0;
-                var totalLastRow = 0;
-                butterflies.forEach(function(butterfly) {
-                    if (butterfly.indexY === 0) {
-                        totalFirstRow++;
-                    }
-                    else if (butterfly.indexY === 5) {
-                        totalLastRow++;
-                    }
-                });
-                var countFirstRow = 0;
-                var countLastRow = 0;
+                            : centerWidth;
 
-                for (var i = 0; i < butterflies.length; i++) {
-                    var butterfly = butterflies[i];
+                    // indexX is in [-1, 1]
+                    // indexY can only be 1, 2, 3 or 4
+                    var absIndexX = Math.abs(butterfly.indexX);
 
-                    var targetX, targetY;
-
-                    if (butterfly.indexY === 0) {
-                        targetX = countFirstRow / (totalFirstRow - 1) * (width - butterflyWidth) + butterflyWidth / 2;
-                        targetY = butterflyHeight / 2;
-                        countFirstRow++;
+                    var targetY = butterflyHeight / 2; // start offset
+                    if (absIndexX > 0.75) {
+                        targetY += 0;
                     }
-                    else if (butterfly.indexY === 5) {
-                        targetX = countLastRow / (totalLastRow - 1) * (width - butterflyWidth) + butterflyWidth / 2;
-                        targetY = height - butterflyHeight / 2;
-                        countLastRow++;
+                    else if (absIndexX > 0.5) {
+                        targetY += 1 * centerHeight / 4;
+                    }
+                    else if (absIndexX > 0.25) {
+                        targetY += 2 * centerHeight / 4;
                     }
                     else {
-                        // possible range of indexX is [-1, 1]
-                        // we separate into two cases
-                        // those that are less than 0 or is duplicate will animate to the left
-                        // and those that are more than or equal to 0 will animate to the right
-                        targetX = butterfly.indexX < 0 || butterfly.duplicate
-                                ? butterflyWidth / 2
-                                : width - butterflyWidth / 2;
-
-                        // to calculate the Y position
-                        // first we divided the height to 4 equal pieces
-                        // then we map the indexY to one of the 4 piece in order
-                        // next we fill the gap by the ratio of the indexX
-                        // again we handle the two cases - the left and right - separately
-                        targetY = (butterfly.indexY - 1) * height / 4;
-
-                        if (butterfly.indexX < 0) {
-                            targetY += -(butterfly.indexX ) // normalise indexX (from [-1, 0) to [0, 1)
-                                * height / 4;
-                        }
-                        else {
-                            targetY += butterfly.indexX * height / 4;
-                        }
+                        targetY += 3 * centerHeight / 4;
                     }
 
-                    createjs.Tween.get(butterfly, {override: true})
-                            .to({x: targetX, y: targetY}, 1500, createjs.Ease.circOut())
-                            .call(tweenCompleted);
+                    targetY += (butterfly.indexY - 1) / 3 // normalise indexY ie. change y to be in [0, 1]
+                            * centerHeight / 4;
                 }
-            }
-        }
 
-        updateButterfly();
-        stage.update();
-    }
-
-    function tweenCompleted() {
-        activeCount--;
-
-        if (activeCount === 0) {
-            setTimeout(function() {
-                isHeartFormation = !isHeartFormation;
-                isAnimating = false;
-            }, 1000);
+                createjs.Tween.get(butterfly, {override: true})
+                        .to({x: targetX, y: targetY}, 1500, createjs.Ease.circOut())
+                        .call(tweenCompleted);
+            });
         }
     }
 
-    function drawButterfly(x, y) {
-        drawCount++;
-        var butterfly = new createjs.Shape(getButterflyGraphics(x, y));
-        butterfly.x = x * scaleFactor + offsetX;
-        butterfly.y = y * scaleFactor + offsetY;
+    updateButterfly();
+    stage.update();
+}
 
-        // keep the x y coordinates for heart shape
-        butterfly.heartX = butterfly.x;
-        butterfly.heartY = butterfly.y;
+function tweenCompleted() {
+    activeCount--;
 
-        stage.addChild(butterfly);
-        butterflies.push(butterfly);
-
-        return butterfly;
+    if (activeCount === 0) {
+        setTimeout(function () {
+            isHeartFormation = !isHeartFormation;
+            isAnimating = false;
+        }, 1000);
     }
+}
 
-    function updateButterfly() {
+function drawButterfly(x, y) {
+    drawCount++;
+    var butterfly = new createjs.Shape(getButterflyGraphics(x, y));
+    butterfly.x = x * scaleFactor + offsetX;
+    butterfly.y = y * scaleFactor + offsetY;
 
-        // using scale for the flipping effect
-        var newScale;
-        var speed = 0.1;
-        if (up) {
-            if(scale>0.4) {
-                newScale = scale-speed;
-            } else {
-                up = false;
-                newScale = scale+speed;
-            }
+    // keep the x y coordinates for heart shape
+    butterfly.heartX = butterfly.x;
+    butterfly.heartY = butterfly.y;
+
+    stage.addChild(butterfly);
+    butterflies.push(butterfly);
+
+    return butterfly;
+}
+
+function updateButterfly() {
+
+    // using scale for the flipping effect
+    var newScale;
+    var speed = 0.1;
+    if (up) {
+        if (scale > 0.4) {
+            newScale = scale - speed;
         } else {
-            if(scale<1) {
-                newScale = scale+speed;
-            } else {
-                up = true;
-                newScale = scale-speed;
-            }
+            up = false;
+            newScale = scale + speed;
         }
-
-        scale = newScale;
-
-        butterflies.forEach(function(butterfly) {
-            butterfly.scaleX = scale;
-        });
+    } else {
+        if (scale < 1) {
+            newScale = scale + speed;
+        } else {
+            up = true;
+            newScale = scale - speed;
+        }
     }
 
-    function getButterflyGraphics(x, y) {
-        var g = new createjs.Graphics();
+    scale = newScale;
 
-        // original range of x is [-1, 1]
-        // here we normalise it to [0, 1]
-        x = (x + 1) / 2;
-        y = (y + 1) / 2;
+    butterflies.forEach(function (butterfly) {
+        butterfly.scaleX = scale;
+    });
+}
 
-        g.beginFill(createjs.Graphics.getRGB(255, Math.ceil(y * 255), Math.ceil(y * 255)));
-        g.moveTo(10.432,-9.353);
-        g.lineTo(8.317,-9.134);
-        g.lineTo(3.566,-6.474);
-        g.lineTo(0.569,-2.048);
-        g.lineTo(-0.569,-2.048);
-        g.lineTo(-3.566,-6.474);
-        g.lineTo(-8.317,-9.134);
-        g.lineTo(-10.432,-9.353);
-        g.lineTo(-11.322,-8.031);
-        g.lineTo(-10.624,-5.068);
-        g.lineTo(-9.73,-1.866);
-        g.lineTo(-7.852,-0.901);
-        g.lineTo(-5.613,-0.669);
-        g.lineTo(-8.297,1.581);
-        g.lineTo(-8.558,3.188);
-        g.lineTo(-7.3,8.031);
-        g.lineTo(-6.369,9.353);
-        g.lineTo(-3.809,8.896);
-        g.lineTo(-1.801,4.987);
-        g.lineTo(-0.746,1.17);
-        g.lineTo(-0.287,3.417);
-        g.lineTo(0.287,3.417);
-        g.lineTo(0.746,1.17);
-        g.lineTo(1.801,4.987);
-        g.lineTo(3.809,8.896);
-        g.lineTo(6.369,9.353);
-        g.lineTo(7.3,8.031);
-        g.lineTo(8.558,3.188);
-        g.lineTo(8.297,1.581);
-        g.lineTo(5.613,-0.669);
-        g.lineTo(7.852,-0.901);
-        g.lineTo(9.73,-1.866);
-        g.lineTo(10.624,-5.068);
-        g.lineTo(11.322,-8.031);
-        return g;
-    }
+function getButterflyGraphics(x, y) {
+    var g = new createjs.Graphics();
+
+    // original range of x is [-1, 1]
+    // here we normalise it to [0, 1]
+    x = (x + 1) / 2;
+    y = (y + 1) / 2;
+
+    g.beginFill(createjs.Graphics.getRGB(255, Math.ceil(y * 255), Math.ceil(y * 255)));
+    g.moveTo(10.432, -9.353);
+    g.lineTo(8.317, -9.134);
+    g.lineTo(3.566, -6.474);
+    g.lineTo(0.569, -2.048);
+    g.lineTo(-0.569, -2.048);
+    g.lineTo(-3.566, -6.474);
+    g.lineTo(-8.317, -9.134);
+    g.lineTo(-10.432, -9.353);
+    g.lineTo(-11.322, -8.031);
+    g.lineTo(-10.624, -5.068);
+    g.lineTo(-9.73, -1.866);
+    g.lineTo(-7.852, -0.901);
+    g.lineTo(-5.613, -0.669);
+    g.lineTo(-8.297, 1.581);
+    g.lineTo(-8.558, 3.188);
+    g.lineTo(-7.3, 8.031);
+    g.lineTo(-6.369, 9.353);
+    g.lineTo(-3.809, 8.896);
+    g.lineTo(-1.801, 4.987);
+    g.lineTo(-0.746, 1.17);
+    g.lineTo(-0.287, 3.417);
+    g.lineTo(0.287, 3.417);
+    g.lineTo(0.746, 1.17);
+    g.lineTo(1.801, 4.987);
+    g.lineTo(3.809, 8.896);
+    g.lineTo(6.369, 9.353);
+    g.lineTo(7.3, 8.031);
+    g.lineTo(8.558, 3.188);
+    g.lineTo(8.297, 1.581);
+    g.lineTo(5.613, -0.669);
+    g.lineTo(7.852, -0.901);
+    g.lineTo(9.73, -1.866);
+    g.lineTo(10.624, -5.068);
+    g.lineTo(11.322, -8.031);
+    return g;
+}
 </script>
 </body>
 </html>
