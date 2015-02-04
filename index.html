@@ -12,8 +12,9 @@
 <script src="js/tweenjs-0.6.0.min.js"></script>
 <script>
 var stage;
-var width = document.getElementById('canvas').width;
-var height = document.getElementById('canvas').height;
+var canvas = document.getElementById('canvas');
+var width = canvas.width;
+var height = canvas.height;
 var butterflies = [];
 var butterflyHeight = 30;
 var butterflyWidth = 30;
@@ -298,6 +299,23 @@ function getButterflyGraphics(x, y) {
     g.lineTo(11.322, -8.031);
     return g;
 }
+
+function resize() {
+    // Our canvas must cover full height of screen
+    // regardless of the resolution
+    var cHeight = window.innerHeight - 4; // -4 to avoid scrollbar
+
+    // So we need to calculate the proper scaled width
+    // that should work well with every resolution
+    var ratio = canvas.width/canvas.height;
+    var cWidth = cHeight * ratio;
+
+    canvas.style.width = cWidth + 'px';
+    canvas.style.height = cHeight + 'px';
+}
+
+window.addEventListener('load', resize, false);
+window.addEventListener('resize', resize, false);
 </script>
 </body>
 </html>
